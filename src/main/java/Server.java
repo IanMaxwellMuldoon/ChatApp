@@ -33,6 +33,7 @@ public class Server implements Runnable{
         private String name;
 
 
+
         public ConnectionHandler(Socket client) {
             this.client = client;
         }
@@ -46,12 +47,34 @@ public class Server implements Runnable{
                 out.println("Enter a name: ");
                 name = in.readLine();
                 System.out.println(name+ " connected!");
+                broadcast(name + " joined the chat!");
+                String message;
+                while(message = in.readLine() != null){
+                    if(message.startsWith("/name")){
+                        //TODO: change nickname
+                    }
+                    if(message.startsWith("/quit")){
+                        //TODO: quit
+                    }
+                    
+
+                }
 
             } catch (IOException e) {
                 e.printStackTrace();
             }
 
 
+        }
+        public void sendMessage(String message){
+            out.println(message);
+        }
+        public void broadcast(String message){
+            for(ConnectionHandler ch : serverList){
+                if(ch != null){
+                    ch.sendMessage(message);
+                }
+            }
         }
     }
 }
