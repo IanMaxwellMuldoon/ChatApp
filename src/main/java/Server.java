@@ -15,7 +15,7 @@ public class Server implements Runnable{
     private ServerSocket server;
     private boolean done;
     private ExecutorService pool; //thread pool
-    private int portnumber = 9999;
+    private int portnumber = 9999; //change to main.portnum
 
     public Server(){
         connections = new ArrayList<>();
@@ -26,10 +26,6 @@ public class Server implements Runnable{
     @Override
     public void run() {
         try {
-            //System.out.println("Enter a port number: ");
-           // Scanner sc = new Scanner(System.in);  //Im not sure if we are supposed to use scanner to get port number
-           // int portnum = sc.nextInt();
-
             server = new ServerSocket(portnumber); //Server
             pool = Executors.newCachedThreadPool();
             while(!done) {
@@ -70,6 +66,7 @@ public class Server implements Runnable{
                 String message = "";
                 out = new PrintWriter(client.getOutputStream(), true);
                 in = new BufferedReader(new InputStreamReader(client.getInputStream()));
+
                 out.println("Enter a name: ");
                 name = in.readLine();
                 System.out.println(name+ " connected!");
@@ -89,6 +86,18 @@ public class Server implements Runnable{
                         // <destination> at the specified < port no>. The <destination> is the IP address of the computer. Any attempt
                         // to  connect  to  an  invalid  IP  should  be  rejected
                         //connect  <destination>  <port  no>  :
+
+                        String[] messageSplit = message.split(" ",3);
+                        if(messageSplit.length == 3){
+                            shutdown();
+                            Client client = new Client();
+                            client.setIp_address(messageSplit[1]);
+                            client.setPortnum(Integer.parseInt(messageSplit[2]));
+                            client.run();
+
+
+
+                        }
                     }
                     if(message.startsWith("/terminate")){
                         //This  command  will  terminate  the  connection  listed  under  the  specified

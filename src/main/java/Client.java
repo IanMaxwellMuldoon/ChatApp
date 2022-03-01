@@ -10,12 +10,14 @@ public class Client implements Runnable{
     private BufferedReader in;
     private PrintWriter out;
     private boolean done;
+    private String ip_address = "127.0.0.1";
+    private int portnum = 9999;
 
 
     @Override
     public void run() {
         try {
-            Socket client = new Socket("127.0.0.1", 9999);
+            client = new Socket("127.0.0.1",9999);
             out = new PrintWriter(client.getOutputStream(), true);
             in = new BufferedReader(new InputStreamReader(client.getInputStream()));
 
@@ -27,10 +29,38 @@ public class Client implements Runnable{
             while((inMessage = in.readLine()) != null){
                 System.out.println(inMessage);
             }
-        }catch (IOException e){
+        }catch (Exception e){
 
         }
     }
+
+    public void setPortnum(int portnum) {
+        this.portnum = portnum;
+    }
+
+    public void setIp_address(String ip_address) {
+        this.ip_address = ip_address;
+    }
+
+    public void runClientConnection(){
+        try {
+            client = new Socket(ip_address, portnum);
+            out = new PrintWriter(client.getOutputStream(), true);
+            in = new BufferedReader(new InputStreamReader(client.getInputStream()));
+
+            InputHandler inHandler = new InputHandler();
+            Thread t = new Thread(inHandler);
+            t.start();
+
+            String inMessage;
+            while((inMessage = in.readLine()) != null){
+                System.out.println(inMessage);
+            }
+        }catch (Exception e){
+
+        }
+    }
+
     class InputHandler implements Runnable{
 
         @Override

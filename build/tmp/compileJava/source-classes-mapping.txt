@@ -1,8 +1,8 @@
-Main.java
- Main
-Server.java
- Server
- Server$ConnectionHandler
 Client.java
  Client
  Client$InputHandler
+Server.java
+ Server
+ Server$ConnectionHandler
+Main.java
+ Main
