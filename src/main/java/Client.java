@@ -66,7 +66,11 @@ public class Client implements Runnable{
         }
     }
 
+
     public static void main(String[] args) {
+        Server server = new Server();
+        Thread s = new Thread(server);
+        s.start();
         Client client = new Client();
         client.run();
     }

@@ -2,10 +2,10 @@ import java.io.BufferedReader;
 import java.io.IOException;
 import java.io.InputStreamReader;
 import java.io.PrintWriter;
+import java.net.InetAddress;
 import java.net.ServerSocket;
 import java.net.Socket;
 import java.util.ArrayList;
-import java.util.Scanner;
 import java.util.concurrent.ExecutorService;
 import java.util.concurrent.Executors;
 
@@ -15,6 +15,7 @@ public class Server implements Runnable{
     private ServerSocket server;
     private boolean done;
     private ExecutorService pool; //thread pool
+    private int portnumber = 9999;
 
     public Server(){
         connections = new ArrayList<>();
@@ -28,7 +29,8 @@ public class Server implements Runnable{
             //System.out.println("Enter a port number: ");
            // Scanner sc = new Scanner(System.in);  //Im not sure if we are supposed to use scanner to get port number
            // int portnum = sc.nextInt();
-            server = new ServerSocket(9999); //Server
+
+            server = new ServerSocket(portnumber); //Server
             pool = Executors.newCachedThreadPool();
             while(!done) {
                 Socket client = server.accept();  //accept method returns client socket
@@ -62,7 +64,7 @@ public class Server implements Runnable{
         }
 
         @Override
-        public void run() {
+        public void run(){
 
             try {
                 String message = "";
@@ -73,18 +75,40 @@ public class Server implements Runnable{
                 System.out.println(name+ " connected!");
                 broadcast(name + " joined the chat!");
                 while((message = in.readLine()) != null){
-                    if(message.startsWith("/name")){
-                        //TODO: change nickname
+                    if(message.startsWith("/help")){
+                        //Display information about the available user interface options or command manual.
                     }
-                    if(message.startsWith("/quit")){
-                        broadcast(name + " has left the server");
-                        shutdown();
+                    if(message.startsWith("/myip")){
+                        out.println("My ip address is: " + InetAddress.getLocalHost().getHostAddress());
+                    }
+                    if(message.startsWith("/myport")){
+                        out.println("This process is listening on port: " + portnumber);
+                    }
+                    if(message.startsWith("/connect")){
+                        //This  command establishes  a  new TCP  connection to  the  specified
+                        // <destination> at the specified < port no>. The <destination> is the IP address of the computer. Any attempt
+                        // to  connect  to  an  invalid  IP  should  be  rejected
+                        //connect  <destination>  <port  no>  :
+                    }
+                    if(message.startsWith("/terminate")){
+                        //This  command  will  terminate  the  connection  listed  under  the  specified
+                        // number  when  LIST  is  used  to  display  all  connections.  E.g.,  terminate  2.
+                        //terminate  <connection  id.>
+                    }
+                    if(message.startsWith("/send")){
+                        //This will
+                        // send the message to the host on the connection that is designated by the number 3 when command “list” is
+                        // used.
+
+                        //send  <connection id.>  <message>
+                    }
+                    if(message.startsWith("/exit")){
+                        //Close all connections and terminate this process. The other peers should also update their connection
+                        // list by removing the peer that exits.
                     }
                     else{
-                        broadcast(name + " : " + message);
+                        broadcast(name + ": " + message);
                     }
-
-
                 }
 
             } catch (IOException e) {
