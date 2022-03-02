@@ -8,8 +8,16 @@ import java.net.Socket;
 import java.util.ArrayList;
 import java.util.concurrent.ExecutorService;
 import java.util.concurrent.Executors;
+// added interface to use server objects in the handler
+interface Listener {
+    void Send(String message);
+    void list(PrintWriter out);
+    void terminate(String message);
+    //TODO: add functions for everything that needs to be done on server side; list,
+    // TODO: also add broadcast and string message/ call broadcast in forloop to send everyone message
+}
 
-public class Server implements Runnable{
+public class Server implements Runnable, Listener {
 
     private ArrayList<ConnectionHandler> connections;
     private ServerSocket server;
@@ -17,10 +25,11 @@ public class Server implements Runnable{
     private ExecutorService pool; //thread pool
     private int portnumber = 9999;
 
-    public Server(){
+    public Server() {
         connections = new ArrayList<>();
         done = false;
     }
+
 
 
     @Override
@@ -32,34 +41,92 @@ public class Server implements Runnable{
 
             server = new ServerSocket(portnumber); //Server
             pool = Executors.newCachedThreadPool();
-            while(!done) {
+            int id = 1;
+            while (!done) {
+
                 Socket client = server.accept();  //accept method returns client socket
-                ConnectionHandler handler = new ConnectionHandler(client);
+                ConnectionHandler handler = new ConnectionHandler(client, this, id++);
                 connections.add(handler);
                 pool.execute(handler);
-            }} catch (IOException e) {  //Handle Server Shutdown
+            }
+        } catch (IOException e) {  //Handle Server Shutdown
             e.printStackTrace();
         }
     }
+
     public void shutdown() throws IOException {
         done = true;
-        if(!server.isClosed()){
+        if (!server.isClosed()) {
             server.close();
         }
-        for(ConnectionHandler ch : connections){
+        for (ConnectionHandler ch : connections) {
             ch.shutdown();
         }
     }
 
-    class ConnectionHandler implements Runnable{  //Handler for each client that connects to server
+    @Override
+    public void Send(String message) {
+        System.out.println("Send called");
+        String[] temp = message.split(" ");
+        String temp2;
+        for (ConnectionHandler ch : connections){
+            temp2 = ch.id + "";
+            if(temp2.equals(temp[1])){
+                // not sure if it is suppose to be remote socket address or local
+                ch.broadcast("Message received from "+ ch.client.getRemoteSocketAddress());
+                ch.broadcast("Sender’s Port: " + ch.client.getPort() );
+                ch.broadcast("Message: " + temp[2]);
+            }
+        }
+        //this.connections
+    }
+    @Override
+    public void list(PrintWriter out){
+        out.println("id: IP address        Port No.");
+        // this iterates through all connections to print list
+        // I dont' know why address has a / in front of it. Not sure if it matter if it is there or not.
+        for (ConnectionHandler ch : connections){
+            out.print(" " + ch.id + ": " + ch.client.getLocalAddress());
+//            System.out.print(" " + ch.id + " " + ch.client.getRemoteSocketAddress());
+//            System.out.print(" " + ch.id + " " + ch.client.getLocalSocketAddress());
+            //TODO: not sure if im suppose to output local port or just port
+//            out.println("             " + ch.client.getLocalPort());
+            out.println("             " + ch.client.getPort());
+        }
+    }//TODO: might need to make sure connections is not empty for errorcheck
+
+    @Override
+    public void terminate(String message) {
+        System.out.println("terminate called");
+        String[] temp = message.split(" ");
+        // weirdly Need to use this String variable to make the if work
+        String temp2;
+        for (ConnectionHandler ch : connections){
+            temp2 = ch.id + "";
+            if(temp2.equals(temp[1])){
+                try {
+                    ch.client.close();
+                    ch.broadcast(temp[1] + "was terminated");
+                } catch (IOException e) {
+                    e.printStackTrace();
+                }
+            }
+        }
+    }
+
+
+    class ConnectionHandler implements Runnable {  //Handler for each client that connects to server
         private Socket client;
         private BufferedReader in;
         private PrintWriter out;
         private String name;
+        private int id;
+        private Listener listener;
 
 
-
-        public ConnectionHandler(Socket client) {
+        public ConnectionHandler(Socket client, Listener listener, int id) {
+            this.id = id;
+            this.listener = listener;
             this.client = client;
         }
 
@@ -70,67 +137,51 @@ public class Server implements Runnable{
                 String message = "";
                 out = new PrintWriter(client.getOutputStream(), true);
                 in = new BufferedReader(new InputStreamReader(client.getInputStream()));
-                out.println("Enter a name: ");
-                name = in.readLine();
-                System.out.println(name+ " connected!");
-                broadcast(name + " joined the chat!");
-                while((message = in.readLine()) != null){
-                    if(message.startsWith("/help")){
-                        //Display information about the available user interface options or command manual.
-                    }
-                    if(message.startsWith("/myip")){
-                        out.println("My ip address is: " + InetAddress.getLocalHost().getHostAddress());
-                    }
-                    if(message.startsWith("/myport")){
-                        out.println("This process is listening on port: " + portnumber);
-                    }
-                    if(message.startsWith("/connect")){
-                        //This  command establishes  a  new TCP  connection to  the  specified
-                        // <destination> at the specified < port no>. The <destination> is the IP address of the computer. Any attempt
-                        // to  connect  to  an  invalid  IP  should  be  rejected
-                        //connect  <destination>  <port  no>  :
-                    }
-                    if(message.startsWith("/terminate")){
-                        //This  command  will  terminate  the  connection  listed  under  the  specified
-                        // number  when  LIST  is  used  to  display  all  connections.  E.g.,  terminate  2.
-                        //terminate  <connection  id.>
-                    }
-                    if(message.startsWith("/send")){
-                        //This will
-                        // send the message to the host on the connection that is designated by the number 3 when command “list” is
-                        // used.
-
-                        //send  <connection id.>  <message>
-                    }
-                    if(message.startsWith("/exit")){
-                        //Close all connections and terminate this process. The other peers should also update their connection
-                        // list by removing the peer that exits.
-                    }
-                    else{
-                        broadcast(name + ": " + message);
+//                out.println("Enter a name: ");
+//                name = in.readLine();
+//                System.out.println(name + " connected!");
+//                broadcast(name + " joined the chat!");
+                while ((message = in.readLine()) != null) {
+//                    if (message.startsWith("name")) {
+//                        //TODO: change nickname
+//                    }
+//                    if(message.startsWith("/quit")){// dont want it to happen
+//                        broadcast(name + " has left the server");
+//                        shutdown();
+//                    }
+                    if (message.startsWith("send")) {
+                        this.listener.Send(message);
+                    } else if (message.startsWith("list")) {
+                        this.listener.list(out);
+                    } else if (message.startsWith("terminate")) {
+                        this.listener.terminate(message);
+                    } else {
+                        broadcast("Id = " + id + " : " + message);// this sends to everyone
                     }
                 }
-
             } catch (IOException e) {
                 e.printStackTrace();
             }
 
 
         }
-        public void sendMessage(String message){
+
+        public void sendMessage(String message) {
             out.println(message);
         }
-        public void broadcast(String message){
-            for(ConnectionHandler ch : connections){
-                if(ch != null){
+
+        public void broadcast(String message) {
+            for (ConnectionHandler ch : connections) {
+                if (ch != null) {
                     ch.sendMessage(message);
                 }
             }
         }
+
         public void shutdown() throws IOException { //client shutdown
             in.close();
             out.close();
-            if(!client.isClosed()){
+            if (!client.isClosed()) {
                 client.close();
             }
         }
