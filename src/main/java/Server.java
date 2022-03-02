@@ -2,6 +2,7 @@ import java.io.BufferedReader;
 import java.io.IOException;
 import java.io.InputStreamReader;
 import java.io.PrintWriter;
+import java.net.InetAddress;
 import java.net.ServerSocket;
 import java.net.Socket;
 import java.util.ArrayList;
@@ -22,6 +23,7 @@ public class Server implements Runnable, Listener {
     private ServerSocket server;
     private boolean done;
     private ExecutorService pool; //thread pool
+    private int portnumber = 9999;
 
     public Server() {
         connections = new ArrayList<>();
@@ -34,9 +36,10 @@ public class Server implements Runnable, Listener {
     public void run() {
         try {
             //System.out.println("Enter a port number: ");
-            // Scanner sc = new Scanner(System.in);  //Im not sure if we are supposed to use scanner to get port number
-            // int portnum = sc.nextInt();
-            server = new ServerSocket(9999); //Server
+           // Scanner sc = new Scanner(System.in);  //Im not sure if we are supposed to use scanner to get port number
+           // int portnum = sc.nextInt();
+
+            server = new ServerSocket(portnumber); //Server
             pool = Executors.newCachedThreadPool();
             int id = 1;
             while (!done) {
@@ -128,7 +131,7 @@ public class Server implements Runnable, Listener {
         }
 
         @Override
-        public void run() {
+        public void run(){
 
             try {
                 String message = "";
