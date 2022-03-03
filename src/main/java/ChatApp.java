@@ -183,9 +183,7 @@ public class ChatApp {
                         System.out.println("Exiting");
                         exit();
                         System.exit(0);
-                    } else {
-                        System.out.println("Invalid command \n");
-                    }
+                    } 
                 } else {
                     System.out.println("Invalid command \n");
                 }
