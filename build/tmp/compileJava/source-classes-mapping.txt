@@ -1,12 +1,9 @@
-<<<<<<< HEAD
-=======
-Main.java
- Main
->>>>>>> main
 Server.java
  Listener
  Server
  Server$ConnectionHandler
+Main.java
+ Main
 Client.java
  Client
  Client$InputHandler

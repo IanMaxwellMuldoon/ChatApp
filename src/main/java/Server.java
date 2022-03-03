@@ -2,7 +2,6 @@ import java.io.BufferedReader;
 import java.io.IOException;
 import java.io.InputStreamReader;
 import java.io.PrintWriter;
-import java.net.InetAddress;
 import java.net.ServerSocket;
 import java.net.Socket;
 import java.util.ArrayList;
@@ -23,7 +22,7 @@ public class Server implements Runnable, Listener {
     private ServerSocket server;
     private boolean done;
     private ExecutorService pool; //thread pool
-    private int portnumber = 9999;
+
 
     public Server() {
         connections = new ArrayList<>();
@@ -35,15 +34,11 @@ public class Server implements Runnable, Listener {
     @Override
     public void run() {
         try {
-            //System.out.println("Enter a port number: ");
-           // Scanner sc = new Scanner(System.in);  //Im not sure if we are supposed to use scanner to get port number
-           // int portnum = sc.nextInt();
 
-            server = new ServerSocket(portnumber); //Server
+            server = new ServerSocket(ChatApp.portnumber); //Server
             pool = Executors.newCachedThreadPool();
             int id = 1;
             while (!done) {
-
                 Socket client = server.accept();  //accept method returns client socket
                 ConnectionHandler handler = new ConnectionHandler(client, this, id++);
                 connections.add(handler);
@@ -76,24 +71,31 @@ public class Server implements Runnable, Listener {
                 ch.broadcast("Message received from "+ ch.client.getRemoteSocketAddress());
                 ch.broadcast("Sender’s Port: " + ch.client.getPort() );
                 ch.broadcast("Message: " + temp[2]);
+
             }
         }
         //this.connections
     }
     @Override
     public void list(PrintWriter out){
+
         out.println("id: IP address        Port No.");
         // this iterates through all connections to print list
         // I dont' know why address has a / in front of it. Not sure if it matter if it is there or not.
-        for (ConnectionHandler ch : connections){
-            out.print(" " + ch.id + ": " + ch.client.getLocalAddress());
+        if(!connections.isEmpty()) {
+            for (ConnectionHandler ch : connections) {
+                out.print(" " + ch.id + ": " + ch.client.getRemoteSocketAddress());
+                out.print(" " + ch.id + ": " + ch.client.getLocalSocketAddress());
 //            System.out.print(" " + ch.id + " " + ch.client.getRemoteSocketAddress());
 //            System.out.print(" " + ch.id + " " + ch.client.getLocalSocketAddress());
-            //TODO: not sure if im suppose to output local port or just port
+                //TODO: not sure if im suppose to output local port or just port
 //            out.println("             " + ch.client.getLocalPort());
-            out.println("             " + ch.client.getPort());
+                out.println("             " + ch.client.getLocalPort()); //Server listening port
+            }
+        }else{
+            out.println("The List is Empty");
         }
-    }//TODO: might need to make sure connections is not empty for errorcheck
+    }
 
     @Override
     public void terminate(String message) {
@@ -130,6 +132,7 @@ public class Server implements Runnable, Listener {
             this.client = client;
         }
 
+
         @Override
         public void run(){
 
@@ -137,18 +140,8 @@ public class Server implements Runnable, Listener {
                 String message = "";
                 out = new PrintWriter(client.getOutputStream(), true);
                 in = new BufferedReader(new InputStreamReader(client.getInputStream()));
-//                out.println("Enter a name: ");
-//                name = in.readLine();
-//                System.out.println(name + " connected!");
-//                broadcast(name + " joined the chat!");
+
                 while ((message = in.readLine()) != null) {
-//                    if (message.startsWith("name")) {
-//                        //TODO: change nickname
-//                    }
-//                    if(message.startsWith("/quit")){// dont want it to happen
-//                        broadcast(name + " has left the server");
-//                        shutdown();
-//                    }
                     if (message.startsWith("send")) {
                         this.listener.Send(message);
                     } else if (message.startsWith("list")) {
