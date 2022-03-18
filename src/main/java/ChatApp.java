@@ -37,7 +37,7 @@ public class ChatApp {
         System.out.println("help");
         System.out.println("myip");
         System.out.println("myport");
-        System.out.println("Connect");
+        System.out.println("connect<ipaddress><portnum>");
         System.out.println("list");
         System.out.println("terminate<connection id>");
         System.out.println("send<connection id><message>");
@@ -49,16 +49,16 @@ public class ChatApp {
         String[] messageArray = message.split(" ");
         if (messageArray.length > 2) {
             try {
-                int id = Integer.parseInt(messageArray[1]);
-                Destination destinationHost = connections.get(id);
+                int id = Integer.parseInt(messageArray[1]); // get the connection id
+                Destination destinationHost = connections.get(id); //get the connection from the connections list
                 System.out.println("id = " + connections.get(id));
                 if (destinationHost != null) {
-                    StringBuilder text = new StringBuilder();
+                    StringBuilder text = new StringBuilder(); // Build the string message from the console message
                     for (int i = 2; i < messageArray.length; i++) {
                         text.append(messageArray[i]);
                         text.append(" ");
                     }
-                    destinationHost.Send(text.toString());
+                    destinationHost.Send(text.toString()); // call Send method on connection with message as param
                     System.out.println("Message sent");
                 } else {
                     System.out.println("Invalid Connection. Check list command");
@@ -88,13 +88,13 @@ public class ChatApp {
         String[] messageArray = message.split(" ");
         if (messageArray != null && messageArray.length == 3) {
             try {
-                InetAddress remoteAddress = InetAddress.getByName(messageArray[1]);
-                int remotePort = Integer.parseInt(messageArray[2]);
+                InetAddress remoteAddress = InetAddress.getByName(messageArray[1]); //obtain destination ip address from console message
+                int remotePort = Integer.parseInt(messageArray[2]); //obtain portnum from console message
                 System.out.println("Connecting to " + remoteAddress + " on port: " + remotePort);
 
-                Destination connection = new Destination(remoteAddress, remotePort);
-                if (connection.initConnections()) {
-                    connections.put(clientCounter, connection);
+                Destination connection = new Destination(remoteAddress, remotePort); //Create Destination object using ip address and portnum
+                if (connection.initConnections()) { //initialize connection ( new socket and print writer output stream)
+                    connections.put(clientCounter, connection); // add connection to the connections list
                     System.out.println("Connected successfully, client id: " + clientCounter++);
                 } else {
                     System.out.println("Unable to establish connection, try again");
@@ -117,16 +117,16 @@ public class ChatApp {
             System.out.println("Attempting to terminate Cid: " + messageArray[1]);
             try {
                 int id = Integer.parseInt(messageArray[1]);
-                if (connections.containsKey(id) == false) {
+                if (connections.containsKey(id) == false) { // if the key is not in the list print error
                     System.out.println("Invalid connection ID, unable to terminate, try list");
                     return;
                 }    //continue if theres a valid id
 
-                Destination connection = connections.get(id);
-                boolean closed = !connection.closeConnection();
+                Destination connection = connections.get(id); //get connection from connection list
+                boolean closed = !connection.closeConnection(); //close connection, and if successful then print closed message
                 if (closed) {
                     System.out.println("ConnectionID: " + id + " was terminated");
-                    connections.remove(id);
+                    connections.remove(id); //remove connection from list
                 }
             } catch (NumberFormatException e) {
                 System.out.println("Invalid connection ID, unable to terminate");
@@ -149,36 +149,36 @@ public class ChatApp {
 
 
     private void runChat() throws IOException {
-        Scanner scanner = new Scanner(System.in);
+        Scanner scanner = new Scanner(System.in); //Create scanner for user input
         try {
-            myIP = InetAddress.getLocalHost();
-            messageReciever = new Server();
+            myIP = InetAddress.getLocalHost(); //get local host ip address
+            messageReciever = new Server(); // create new message reciever server on a new thread
             new Thread(messageReciever).start();
 
-            while (true) {
+            while (true) { //loop for receiving messages
                 String message = scanner.nextLine();
                 if (message != null && message.trim().length() > 0) {
                     message = message.trim();
                     switch (message) {
                         case "help":
-                            help();
+                            help(); // displays options
                             break;
                         case "myip":
-                            System.out.println(getMyIP());
+                            System.out.println(getMyIP()); // print host (my computer) ip address
                             break;
                         case "myport":
-                            System.out.println(getMyPort());
+                            System.out.println(getMyPort()); // print listening port
                             break;
                     }
                     if (message.startsWith("connect")) {
-                        connect(message);
+                        connect(message);  // run connect method with console message as param
                     } else if (message.equals("list")) {
-                        list();
+                        list(); //display list of connections
                     } else if (message.startsWith("terminate")) {
-                        terminate(message);
+                        terminate(message); // run terminate method with console message as param
                     } else if (message.startsWith("send")) {
-                        Send(message);
-                    } else if (message.startsWith("exit")) {
+                        Send(message); // run Send method with console message as param
+                    } else if (message.startsWith("exit")) { //Exit the program
                         System.out.println("Exiting");
                         exit();
                         System.exit(0);
@@ -198,11 +198,11 @@ public class ChatApp {
 
 
     public static void main(String[] args) {
-        if (args != null && args.length > 0) {
+        if (args != null && args.length > 0) { //make sure app is run with a port number
             try {
                 int portnumber = Integer.parseInt(args[0]);
-                ChatApp chatApp = new ChatApp(portnumber);
-                chatApp.runChat();
+                ChatApp chatApp = new ChatApp(portnumber); //insert portnumber as param
+                chatApp.runChat(); //run ChatApp
             } catch (NumberFormatException e) {
                 System.out.println("Invalid number for port");
             } catch (IOException e) {
@@ -321,13 +321,13 @@ public class ChatApp {
         private PrintWriter out;
         private boolean isConnected;
 
-        public Destination(InetAddress remoteHost, int remotePort) {
+        public Destination(InetAddress remoteHost, int remotePort) { //constructor
 
             this.remoteHost = remoteHost;
             this.remotePort = remotePort;
         }
 
-        public boolean initConnections(){
+        public boolean initConnections(){ // initialize connections ( create new socket and print writer )
             try {
                 this.connection = new Socket(remoteHost, remotePort);
                 this.out = new PrintWriter(connection.getOutputStream(), true);
@@ -340,10 +340,12 @@ public class ChatApp {
         public int getRemotePort() {
             return remotePort;
         }
+
         public InetAddress getRemoteHost() {
             return remoteHost;
         }
-        public void Send(String message){
+
+        public void Send(String message){ // send message using print writer
             if(isConnected){
                 out.println(message);
             }
@@ -357,7 +359,7 @@ public class ChatApp {
         }
 
 
-        public boolean closeConnection(){
+        public boolean closeConnection(){ // close Connection
             isConnected = false;
             if(out != null)
                 out.close();
